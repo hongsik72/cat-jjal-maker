@@ -52,6 +52,12 @@
       },
     };
 
+    const fetchCat = async (text) => {
+      const OPEN_API_DOMAIN = "https://cataas.com";
+      const response = await fetch(`${OPEN_API_DOMAIN}/cat/says/${text}?json=true`);
+      const responseJson = await response.json();
+      return `${OPEN_API_DOMAIN}/${responseJson.url}`;
+    };
 
     const Title = (props) => {
       return (
@@ -71,21 +77,27 @@
 
     function Favotites({ favorites }) {
 
+      if (favorites.length == 0) {
+        return <div>사진 위 하트를 클릭하여 사진을 저장해봐요.</div>
+      }
+
       return (
         <ul className="favorites">
           {
-            favorites.map((cat1) => (<CatItem img={cat1} key={cat1} />))
+            favorites.map(cat1 => (<CatItem img={cat1} key={cat1} />))
           }
         </ul>
       )
     }
 
-    const MainCard = ({ img, onHeartclick }) => {
+    const MainCard = ({ img, onHeartclick, AlreadyFavorate }) => {
+
+      const heartIcon = AlreadyFavorate ? "💖" : "♥";
 
       return (
         <div className="main-card">
           <img src={img} alt="고양이" width="500" />
-          <button onClick={onHeartclick}>🤍</button>
+          <button onClick={onHeartclick}>{heartIcon}</button>
         </div>
       )
     }
@@ -122,7 +134,7 @@
           setMsg("공백은 입력할 수 없습니다.");
           return;
         }
-        updateMainCat();
+        updateMainCat(value);
       }
 
       return (
@@ -141,22 +153,45 @@
       const CAT3 = "https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript";
       const DOG1 = "https://cdn.pixabay.com/photo/2014/08/10/08/17/dog-414570__480.jpg";
 
-      const [counter, setCounter] = React.useState(jsonLocalStorage.getItem('count'));
+      //const [counter, setCounter] = React.useState(jsonLocalStorage.getItem('count'));
+      const [counter, setCounter] = React.useState(() => {
+        return jsonLocalStorage.getItem('count')
+      })
+
       const [mainCat, setMainCat] = React.useState(CAT1);
-      //const [favorites, setFavorites] = React.useState([CAT1, CAT2]);
-      const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem('favorites') || []
+
+      //const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem('favorites') || []);
+      const [favorites, setFavorites] = React.useState(() => {
+        return jsonLocalStorage.getItem('favorites') || []
+      })
+
+      const AlreadyFavorate = favorites.includes(mainCat);
+
+      async function SetInitialCat() {
+        const newCat = await fetchCat("First Cat");
+        console.log(newCat);
+        setMainCat(newCat);
+      }
+
+      React.useEffect(
+        () => { SetInitialCat(); }, []
       );
 
+      //SetInitialCat();
 
+      async function updateMainCat(value) {
 
-      function updateMainCat() {
-        setMainCat(DOG1);
-        const accCounter = counter + 1;
+        const newCat = await fetchCat(value);
+        setMainCat(newCat);
+        //const accCounter = counter + 1;
+        //jsonLocalStorage.setItem('count', accCounter);
+        //setCounter(jsonLocalStorage.getItem('count'));
 
-        jsonLocalStorage.setItem('count', accCounter);
-        //setCounter(Number(localStorage.getItem('count')));
-        setCounter(jsonLocalStorage.getItem('count'));
-
+        setCounter((prev) => {
+          const accCounter = prev + 1;
+          jsonLocalStorage.setItem('count', accCounter);
+          return accCounter;
+        })
       }
 
       function handleheartclick() {
@@ -166,11 +201,13 @@
         jsonLocalStorage.setItem('favorites', nextFavorates);
       }
 
+      const TitleAhead = counter == null ? "" : counter + "번째 ";
+
       return (
         <div >
-          <Title>{counter}번째 고양이 가라사대</Title>
+          <Title > {TitleAhead} 고양이 가라사대</Title>
           <Form updateMainCat={updateMainCat} />
-          <MainCard img={mainCat} onHeartclick={handleheartclick} />
+          <MainCard img={mainCat} onHeartclick={handleheartclick} AlreadyFavorate={AlreadyFavorate} />
           <Favotites favorites={favorites} />
         </div>
       )

@@ -1,4 +1,4 @@
-const EMPTY_HEART = "🤍";
+const EMPTY_HEART = "♥";
 const FULL_HEART = "💖";
 
 const CAT1s = "https://mblogthumb-phinf.pstatic.net/20141204_276/firstgjp_14176838057819gNtv_JPEG/___.jpg?type=w2";
